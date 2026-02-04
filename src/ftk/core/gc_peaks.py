@@ -1,50 +1,70 @@
+from __future__ import annotations
+
+from enum import Enum
 from typing import List, Optional
 
 
-def gc_peaks_kde(gc_values: List[float], grid: int = 1024, bw_method: Optional[float] = None,
-                 min_prominence: float = 0.01) -> int:
-    if len(gc_values) < 5:
-        return 0
+class GcPeaksMethod(str, Enum):
+    kde = "kde"
+    gmm = "gmm"
 
-    try:
-        from scipy.stats import gaussian_kde
-    except Exception as e:
-        raise RuntimeError("scipy is required for KDE-based gc_peaks.") from e
 
-    xs = [i / (grid - 1) for i in range(grid)]
-    kde = gaussian_kde(gc_values, bw_method=bw_method)
-    ys = kde(xs)
+def count_gc_peaks(
+    gc_values: List[float],
+    method: GcPeaksMethod,
+    *,
+    kde_grid: int = 1024,
+    kde_min_prominence: float = 0.01,
+    gmm_max_components: int = 6,
+) -> Optional[int]:
+    if not gc_values:
+        return None
 
-    y_max = max(ys) if ys is not None else 0.0
-    if y_max <= 0:
-        return 0
-    ys = [y / y_max for y in ys]
+    if method == GcPeaksMethod.kde:
+        return _count_kde(gc_values, grid=kde_grid, min_prominence=kde_min_prominence)
+    if method == GcPeaksMethod.gmm:
+        return _count_gmm(gc_values, max_components=gmm_max_components)
+
+    raise ValueError(f"Unknown method: {method}")
+
+
+def _count_kde(gc_values: List[float], *, grid: int, min_prominence: float) -> int:
+    import numpy as np
+    from scipy.stats import gaussian_kde
+
+    x = np.array(gc_values, dtype=float)
+    if x.size < 3:
+        return 1
+
+    xs = np.linspace(0.0, 1.0, grid)
+    ys = gaussian_kde(x)(xs)
+
+    max_y = float(ys.max()) if ys.size else 0.0
+    if max_y <= 0:
+        return 1
 
     peaks = 0
-    for i in range(1, grid - 1):
-        if ys[i] > ys[i - 1] and ys[i] > ys[i + 1] and ys[i] >= min_prominence:
-            peaks += 1
-    return peaks
+    for i in range(1, len(xs) - 1):
+        if ys[i] > ys[i - 1] and ys[i] > ys[i + 1]:
+            if float(ys[i] / max_y) >= min_prominence:
+                peaks += 1
+    return max(peaks, 1)
 
 
-def gc_peaks_gmm(gc_values: List[float], max_components: int = 6) -> int:
-    if len(gc_values) < 10:
-        return 0
-
-    try:
-        from sklearn.mixture import GaussianMixture
-    except Exception as e:
-        raise RuntimeError("scikit-learn is required for GMM-based gc_peaks.") from e
-
+def _count_gmm(gc_values: List[float], *, max_components: int) -> int:
     import numpy as np
-    X = np.array(gc_values, dtype=float).reshape(-1, 1)
+    from sklearn.mixture import GaussianMixture
+
+    x = np.array(gc_values, dtype=float).reshape(-1, 1)
+    if x.shape[0] < 3:
+        return 1
 
     best_k = 1
     best_bic = None
     for k in range(1, max_components + 1):
-        gmm = GaussianMixture(n_components=k, covariance_type="full", random_state=0)
-        gmm.fit(X)
-        bic = gmm.bic(X)
+        model = GaussianMixture(n_components=k, random_state=0)
+        model.fit(x)
+        bic = model.bic(x)
         if best_bic is None or bic < best_bic:
             best_bic = bic
             best_k = k

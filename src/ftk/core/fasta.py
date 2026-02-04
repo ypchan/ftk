@@ -1,64 +1,48 @@
-import os
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import IO, Iterator, Optional
 import gzip
-from typing import Iterator, Tuple, Optional, List
-
-from tqdm import tqdm
+import sys
 
 
-class _TqdmReader:
-    def __init__(self, raw, pbar: tqdm):
-        self.raw = raw
-        self.pbar = pbar
-
-    def read(self, n: int = -1) -> bytes:
-        b = self.raw.read(n)
-        if b:
-            self.pbar.update(len(b))
-        return b
-
-    def readline(self, n: int = -1) -> bytes:
-        b = self.raw.readline(n)
-        if b:
-            self.pbar.update(len(b))
-        return b
-
-    def close(self):
-        try:
-            self.raw.close()
-        finally:
-            self.pbar.close()
+@dataclass(frozen=True)
+class FastaRecord:
+    name: str
+    seq: str
 
 
-def iter_fasta_records(path: str, desc: str = "Reading") -> Iterator[Tuple[str, str]]:
-    total = os.path.getsize(path)
-    pbar = tqdm(total=total, unit="B", unit_scale=True, unit_divisor=1024, desc=desc, leave=False, mininterval=0.2)
+def _open_text_auto(path: Path) -> IO[str]:
+    if str(path).endswith(".gz"):
+        return gzip.open(path, "rt", encoding="utf-8", errors="replace")
+    return open(path, "rt", encoding="utf-8", errors="replace")
 
-    raw = open(path, "rb")
-    wrapped = _TqdmReader(raw, pbar)
 
-    if path.endswith(".gz"):
-        handle = gzip.GzipFile(fileobj=wrapped, mode="rb")
-        lines = (line.decode("utf-8", errors="replace") for line in handle)
-    else:
-        handle = wrapped
-        lines = (line.decode("utf-8", errors="replace") for line in wrapped)
-
+def iter_fasta_from_handle(handle: IO[str]) -> Iterator[FastaRecord]:
     name: Optional[str] = None
-    chunks: List[str] = []
+    chunks: list[str] = []
 
-    try:
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith(">"):
-                if name is not None:
-                    yield name, "".join(chunks).upper()
-                name = line[1:].split()[0]
-                chunks = []
-            else:
-                chunks.append(line)
-        if name is not None:
-            yield name, "".join(chunks).upper()
-    finally:
-        handle.close()
+    for line in handle:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith(">"):
+            if name is not None:
+                yield FastaRecord(name=name, seq="".join(chunks).upper())
+            name = line[1:].split()[0] if line[1:] else ""
+            chunks = []
+        else:
+            chunks.append(line)
+
+    if name is not None:
+        yield FastaRecord(name=name, seq="".join(chunks).upper())
+
+
+def iter_fasta(path: Path) -> Iterator[FastaRecord]:
+    with _open_text_auto(path) as f:
+        yield from iter_fasta_from_handle(f)
+
+
+def iter_fasta_stdin() -> Iterator[FastaRecord]:
+    yield from iter_fasta_from_handle(sys.stdin)
