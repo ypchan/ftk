@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from rich_argparse import RichRawDescriptionHelpFormatter
+from rich_argparse import RawDescriptionRichHelpFormatter
 from ftk.core.msaqc import MsaQcConfig, run_msaqc_pipeline
 
 
