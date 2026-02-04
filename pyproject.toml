@@ -1,0 +1,16 @@
+[project]
+name = "ftk"
+version = "0.1.0"
+description = "Extensible CLI toolkit"
+requires-python = ">=3.9"
+dependencies = [
+  "typer>=0.9",
+  "tqdm>=4.60",
+  "scipy>=1.7",
+]
+
+[project.optional-dependencies]
+gmm = ["scikit-learn>=1.0"]
+
+[project.scripts]
+ftk = "ftk.cli:main"
