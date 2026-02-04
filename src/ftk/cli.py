@@ -6,12 +6,10 @@ import sys
 from rich_argparse import RichHelpFormatter
 
 from ftk.commands.stat import add_stat_parser
+from ftk.commands.fishing import add_fishing_parser
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    # RichHelpFormatter will render argparse help via Rich.
-    # add_argument(..., default=...) will be shown automatically by ArgumentDefaultsHelpFormatter behavior.
-    # RichHelpFormatter already supports showing defaults; keep defaults explicit on args.
     parser = argparse.ArgumentParser(
         prog="ftk",
         description="ftk: extensible CLI toolkit.",
@@ -19,7 +17,9 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
+
     add_stat_parser(subparsers)
+    add_fishing_parser(subparsers)
 
     return parser
 
@@ -31,6 +31,11 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "stat":
         from ftk.commands.stat import run_stat
         run_stat(args)
+        return
+
+    if args.command == "fishing":
+        from ftk.commands.fishing import run_fishing
+        run_fishing(args)
         return
 
     parser.print_help()
