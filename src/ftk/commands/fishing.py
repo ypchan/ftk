@@ -32,7 +32,7 @@ def add_fishing_parser(subparsers: argparse._SubParsersAction) -> None:
         "fishing",
         help="Fish homologous sequences from genome pools using minimap2.",
         description=desc,
-        formatter_class=RichHelpFormatter,
+        formatter_class=RawTextRichHelpFormatter,
     )
 
     p.add_argument(
