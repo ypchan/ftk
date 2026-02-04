@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from ftk.utils.rich_help import RichRawDescriptionHelpFormatter
+from rich_argparse import RichRawDescriptionHelpFormatter
 from ftk.core.msaqc import MsaQcConfig, run_msaqc_pipeline
 
 
@@ -51,7 +51,7 @@ def add_msaqc_parser(subparsers: argparse._SubParsersAction) -> None:
         "msaqc",
         help="QC an MSA: detect anomalous taxa; auto main cluster; plots + TSV.",
         description=desc,
-        formatter_class=RichRawDescriptionHelpFormatter,
+        formatter_class=RawDescriptionRichHelpFormatter,
     )
 
     p.add_argument("--msa", required=True, help="Input aligned MSA FASTA/FASTA.gz.")
