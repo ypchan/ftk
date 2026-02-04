@@ -5,7 +5,8 @@ import typer
 
 from ftk.core.stats import run_stat
 
-app = typer.Typer(help="Compute genome FASTA assembly statistics.")
+app = typer.Typer(help="Compute genome FASTA assembly statistics.",
+                  context_settings={"help_option_names": ["-h", "--help"]})
 
 
 class Metric(str, Enum):
