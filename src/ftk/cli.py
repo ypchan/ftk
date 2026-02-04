@@ -7,6 +7,7 @@ from rich_argparse import RichHelpFormatter
 
 from ftk.commands.stat import add_stat_parser
 from ftk.commands.fishing import add_fishing_parser
+from ftk.commands.msaqc import add_msaqc_parser
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -20,6 +21,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     add_stat_parser(subparsers)
     add_fishing_parser(subparsers)
+    add_msaqc_parser(subparsers)
 
     return parser
 
@@ -37,6 +39,12 @@ def main(argv: list[str] | None = None) -> None:
         from ftk.commands.fishing import run_fishing
         run_fishing(args)
         return
+    
+    if args.command == "msaqc":
+        from ftk.commands.msaqc import run_msaqc
+        run_msaqc(args)
+        return
+
 
     parser.print_help()
 

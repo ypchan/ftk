@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from rich_argparse import RichHelpFormatter
+from rich_argparse import RawTextRichHelpFormatter
 
 from ftk.core.fishing import FishingConfig, run_fishing_pipeline
 
