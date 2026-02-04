@@ -1,6 +1,6 @@
 [build-system]
-# Standard build requirements for modern Python packaging
-requires = ["setuptools>=61.0", "wheel"]
+# Build requirements for modern Python packaging
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,29 +9,43 @@ version = "0.1.0"
 description = "Extensible CLI toolkit"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+  { name = "Yanpeng Chen", email = "yanpengch@qq.com" }
 ]
+
+# Core runtime dependencies
+# Keep constraints minimal to be friendly to existing local environments.
+# Note: numpy<2 and rich<14 reduce breakage in environments that include packages
+# like numba/streamlit that still require those upper bounds.
 dependencies = [
   "typer>=0.9",
   "tqdm>=4.60",
   "scipy>=1.7",
+  "numpy<2",
+  "rich<14",
 ]
 
 [project.optional-dependencies]
+# Optional features
 # Install with: pip install "ftk[gmm]"
-gmm = ["scikit-learn>=1.0"]
+gmm = [
+  "scikit-learn>=1.0",
+]
 
 [project.scripts]
-# This maps the 'ftk' command to the main function in ftk/cli.py
+# Map the `ftk` command to ftk.cli:main
 ftk = "ftk.cli:main"
 
 [tool.setuptools]
-# Explicitly tell setuptools which package to include
-# This prevents the 'Multiple top-level packages' error
-packages = ["ftk"]
+# Use src layout: packages live under ./src
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+# Automatically include ftk and all subpackages (ftk.*)
+where = ["src"]
+include = ["ftk*"]
 
 [tool.setuptools.package-data]
-# Ensure non-python files are included if necessary
+# Include non-Python files if needed
 "*" = ["*.txt", "*.md"]
