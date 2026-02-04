@@ -1,8 +1,18 @@
+[build-system]
+# Standard build requirements for modern Python packaging
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "ftk"
 version = "0.1.0"
 description = "Extensible CLI toolkit"
+readme = "README.md"
 requires-python = ">=3.9"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
 dependencies = [
   "typer>=0.9",
   "tqdm>=4.60",
@@ -10,7 +20,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Install with: pip install "ftk[gmm]"
 gmm = ["scikit-learn>=1.0"]
 
 [project.scripts]
+# This maps the 'ftk' command to the main function in ftk/cli.py
 ftk = "ftk.cli:main"
+
+[tool.setuptools]
+# Explicitly tell setuptools which package to include
+# This prevents the 'Multiple top-level packages' error
+packages = ["ftk"]
+
+[tool.setuptools.package-data]
+# Ensure non-python files are included if necessary
+"*" = ["*.txt", "*.md"]
